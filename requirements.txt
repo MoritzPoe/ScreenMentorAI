@@ -5,8 +5,12 @@ Pillow==10.1.0
 python-dotenv==1.0.0
 whisper==1.1.10
 gTTS==2.4.0
-numpy==1.26.2
+numpy==1.24.3
 requests==2.31.0
 python-engineio==4.8.0
 eventlet==0.33.3
-SpeechRecognition==3.10.0 
+SpeechRecognition==3.10.0
+fastapi==0.100.0
+uvicorn==0.22.0
+pydantic==2.11.3
+socketio==5.8.0
