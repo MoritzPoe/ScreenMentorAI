@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { CameraIcon, MicrophoneIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
+import { CameraIcon, MicrophoneIcon } from '@heroicons/react/24/solid';
 
 const socket = io('http://localhost:8000');
 
@@ -14,6 +14,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [showPopup, setShowPopup] = useState(false); // State for pop-up
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -23,12 +24,12 @@ function App() {
         type: 'ai',
         content: response.text,
       };
-      
+
       if (response.audio) {
         newMessage.audioUrl = `data:audio/mp3;base64,${response.audio}`;
       }
-      
-      setMessages(prev => [...prev, newMessage]);
+
+      setMessages((prev) => [...prev, newMessage]);
     });
 
     return () => {
@@ -45,27 +46,37 @@ function App() {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       setIsScreenSharing(true);
 
-      const track = stream.getVideoTracks()[0];
-      
-      // Take screenshot every 5 seconds
-      const interval = setInterval(() => {
-        const videoElement = document.createElement('video');
-        videoElement.srcObject = stream;
-        videoElement.onloadedmetadata = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = videoElement.videoWidth;
-          canvas.height = videoElement.videoHeight;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(videoElement, 0, 0);
-          const imageData = canvas.toDataURL('image/jpeg');
-          socket.emit('screen_data', imageData);
-        };
-      }, 5000);
+      const videoElement = document.createElement('video');
+      videoElement.srcObject = stream;
 
-      track.onended = () => {
-        clearInterval(interval);
+      // Wait for the video to load metadata
+      await new Promise((resolve) => {
+        videoElement.onloadedmetadata = () => {
+          videoElement.play();
+          resolve(null);
+        };
+      });
+
+      // Delay screenshot by 2 seconds
+      setTimeout(() => {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(videoElement, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg');
+        socket.emit('screen_data', imageData);
+
+        // Stop the video stream
+        stream.getTracks().forEach((track) => track.stop());
         setIsScreenSharing(false);
-      };
+      }, 2000);
+
+      // Show success pop-up
+      setShowPopup(true); // Show the pop-up
+      setTimeout(() => {
+        setShowPopup(false); // Hide the pop-up after 3 seconds
+      }, 3000); // 3000 milliseconds = 3 seconds
     } catch (err) {
       console.error('Error capturing screen:', err);
       setIsScreenSharing(false);
@@ -77,9 +88,9 @@ function App() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      
+
       const audioChunks: BlobPart[] = [];
-      
+
       mediaRecorder.ondataavailable = (event) => {
         audioChunks.push(event.data);
       };
@@ -112,6 +123,13 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
+      {/* Pop-up notification */}
+      {showPopup && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+          Launch succeeded!
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => (
           <div
@@ -139,27 +157,36 @@ function App() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t bg-white p-4">
-        <div className="flex items-center space-x-4">
+      <div className="border-t bg-white p-6">
+        <div className="flex items-center justify-center space-x-8">
+          {/* Screen Capture Button */}
           <button
             onClick={isScreenSharing ? undefined : startScreenCapture}
-            className={`p-2 rounded-full ${
-              isScreenSharing
-                ? 'bg-red-500 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-            }`}
+            className={`p-4 rounded-full shadow-md transition-all duration-300
+              ${isScreenSharing ? 'bg-rose-400 text-white' : 'bg-rose-100 hover:bg-rose-200 text-rose-700'}
+            `}
           >
-            <CameraIcon className="h-6 w-6" />
+            <CameraIcon className="h-8 w-8" />
           </button>
+
+          {/* Audio Record Button */}
           <button
             onClick={isRecording ? stopAudioRecording : startAudioRecording}
-            className={`p-2 rounded-full ${
-              isRecording
-                ? 'bg-red-500 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-            }`}
+            className={`relative p-6 rounded-full shadow-md transition-all duration-500
+              ${isRecording ? 'bg-emerald-400 text-white' : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700'}
+            `}
           >
-            <MicrophoneIcon className="h-6 w-6" />
+            <MicrophoneIcon
+              className={`h-8 w-8 transform transition-transform duration-500 ${
+                isRecording ? 'rotate-45 scale-110' : 'rotate-0 scale-100'
+              }`}
+            />
+            {/* "Stop" Indicator */}
+            {isRecording && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+              </div>
+            )}
           </button>
         </div>
       </div>
@@ -167,4 +194,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

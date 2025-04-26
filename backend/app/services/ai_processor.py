@@ -1,8 +1,16 @@
 import base64
+import openai
+import ssl
+import urllib
+from openai import AsyncOpenAI
+from openai import OpenAI
+#from openai.audio import LocalAudioPlayer
+from pydub import AudioSegment
+from pydub.playback import play
+import base64
 import io
 from PIL import Image
 import whisper
-import openai
 from gtts import gTTS
 from ..core.config import settings
 import ssl
@@ -15,85 +23,61 @@ opener = urllib.request.build_opener(
 )
 urllib.request.install_opener(opener)
 
-openai.api_key = settings.OPENAI_API_KEY
+key = settings.OPENAI_API_KEY
 
-class AIProcessor:
-    def __init__(self):
-        self.whisper_model = whisper.load_model("base")
+client = OpenAI(api_key=key)
+openai = AsyncOpenAI(api_key=key)
+
+def encode_image_to_base64(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode("utf-8")
     
-    async def process_screen(self, image_data: str) -> dict:
-        """Process screenshot and generate response"""
-        try:
-            # Decode base64 image
-            image_bytes = base64.b64decode(image_data.split(',')[1])
-            image = Image.open(io.BytesIO(image_bytes))
-            
-            import uuid
-
-            filename = f"received_screen_{uuid.uuid4().hex}.jpeg"
-            image.save(filename, "JPEG")
-            
-            # Convert image to text description using OpenAI's Vision model
-            response = openai.ChatCompletion.create(
-                model="gpt-4-vision-preview",
-                messages=[
+def transcribe_audio(audio_path):
+    with open(audio_path, "rb") as audio_file:
+        transcription = client.audio.transcriptions.create(
+        model="gpt-4o-mini-transcribe", 
+        file=audio_file)
+    return transcription.text
+    
+def generate_response(image_base64, text_prompt):
+    response = client.responses.create(
+        model="gpt-4.1-mini",
+        temperature=0,
+        max_output_tokens=300,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    { "type": "input_text", "text": f"""{text_prompt} 
+                        Answer briefly (1–2 sentences), only using commas and dots. If needed, mention screen areas (top left, bottom right, near icons).""" },
                     {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": "What do you see in this image?"},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{base64.b64encode(image_bytes).decode('utf-8')}"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            )
-            
-            return {
-                "text": response.choices[0].message.content,
-                "type": "screen"
+                        "type": "input_image",
+                        "image_url": f"data:image/jpeg;base64,{image_base64}",
+                    },
+                ],
             }
-        except Exception as e:
-            return {"error": str(e)}
-    
-    async def process_audio(self, audio_data: str) -> dict:
-        """Process base64 audio and generate AI response"""
-        try:
-            # Step 1: Decode Base64
-            decoded_audio = base64.b64decode(audio_data)
-            
-            # Step 2: Save to WAV file (so you can listen to it later)
-            with open("received_audio.wav", "wb") as f:
-                f.write(decoded_audio)
+        ],
+    )
+    return response.output_text
 
-            # Step 3: Transcribe audio using Whisper
-            result = self.whisper_model.transcribe("received_audio.wav")
-            transcription = result["text"]
-            
-            # Step 4: Get AI response from OpenAI GPT-4
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "user", "content": transcription}
-                ]
-            )
-            ai_response = response.choices[0].message.content
-            
-            # Step 5: Convert AI response to speech
-            tts = gTTS(text=ai_response, lang='en')
-            audio_io = io.BytesIO()
-            tts.write_to_fp(audio_io)
-            tts_audio_base64 = base64.b64encode(audio_io.getvalue()).decode('utf-8')
+async def gpt_audio_responce(gpt_respnce):
+    async with openai.audio.speech.with_streaming_response.create(
+        model="gpt-4o-mini-tts",
+        voice="coral",
+        input=gpt_respnce,
+        instructions="Speak in a calm, warm, and friendly tone, with a natural rhythm and soft intonation, like a professional storyteller or a podcast host. Avoid sharp or robotic sounds.",
+        #response_format="pcm",
+    ) as response:
+        #await LocalAudioPlayer().play(response)
+        await response.stream_to_file('gpt_output.mp3')
+        # Load and play an MP3 file
+        audio = AudioSegment.from_file("gpt_output.mp3", format="mp3")
+        play(audio)
 
-            return {
-                "text": ai_response,
-                "audio": tts_audio_base64,
-                "type": "audio"
-            }
-        except Exception as e:
-            return {"error": str(e)}
+async def mp3_and_jpg_to_mp3(path_to_user_mp3, path_to_user_jpg):
+    image = encode_image_to_base64(path_to_user_jpg)
+    user_promt = transcribe_audio(path_to_user_mp3)
+    model_text_responce = generate_response(image, user_promt)
+    await gpt_audio_responce(model_text_responce)
+    return model_text_responce
 
-ai_processor = AIProcessor() 
