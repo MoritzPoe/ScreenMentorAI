@@ -75,6 +75,10 @@ async def process_data(sid, data):
             "type": "combined"
         }, room=sid)
 
+        os.remove(audio_webm_path)
+        os.remove(audio_mp3_path)
+        os.remove(image_path)
+
     except Exception as e:
         print("Error in process_data:", e)
         await sio.emit('ai_response', {

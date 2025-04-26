@@ -36,19 +36,58 @@
       </div>
 
     <script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    
+    startBtn.addEventListener('click', () => {
+        startBtn.classList.add('hidden');
+        stopBtn.classList.remove('hidden');
+    });
+    
+    stopBtn.addEventListener('click', () => {
+        stopBtn.classList.add('hidden');
+        startBtn.classList.remove('hidden');
+    });
+    </script>
+
+
+    <script>
         const socket = io("http://localhost:8000");
         let mediaRecorder;
         let isRecording = false;
         let screenshotData = null;
-
         function addMessage(content, isAI = false, audioUrl = null) {
             const messagesDiv = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `flex ${isAI ? 'justify-start' : 'justify-end'} mb-4`;
 
             const bubble = document.createElement('div');
-            bubble.className = `rounded-lg p-4 max-w-[70%] ${isAI ? 'bg-white text-gray-800' : 'bg-blue-500 text-white'}`;
-            bubble.textContent = content;
+            bubble.className = `rounded-lg p-4 max-w-[70%] transition-all duration-500 ${isAI ? 'bg-white text-gray-800' : 'bg-blue-500 text-white'}`;
+            bubble.textContent = ''; 
+
+            messageDiv.appendChild(bubble);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            let index = 0;
+
+            function typeWriter() {
+                if (index < content.length) {
+                    bubble.textContent += content.charAt(index);
+                    index++;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    setTimeout(typeWriter, 10); 
+                } else {
+                
+                    bubble.classList.add('border', 'border-green-400', 'shadow-md');
+                    setTimeout(() => {
+                        bubble.classList.remove('border-green-400');
+                        bubble.classList.add('border-gray-300');
+                    }, 800); 
+                }
+            }
+
+            typeWriter();
 
             if (audioUrl) {
                 const audio = document.createElement('audio');
@@ -60,11 +99,7 @@
                 audio.appendChild(source);
                 bubble.appendChild(audio);
             }
-
-            messageDiv.appendChild(bubble);
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
+}
 
         async function startScreenCapture() {
             try {
@@ -171,6 +206,20 @@
             console.error('Server error:', error);
             addMessage('Error: ' + error.message, true);
         });
+        document.addEventListener('keydown', async (event) => {
+            if (event.key.toLowerCase() === 'k') {
+                if (!isRecording) {
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                    await startScreenCapture();
+                    startAudioRecording();
+                } else {
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    stopAudioRecording();
+                }
+            }
+});
     </script>
 </body>
 </html>

@@ -70,7 +70,7 @@ function App() {
         // Stop the video stream
         stream.getTracks().forEach((track) => track.stop());
         setIsScreenSharing(false);
-      }, 2000);
+      }, 5000);
 
       // Show success pop-up
       setShowPopup(true); // Show the pop-up
@@ -96,7 +96,7 @@ function App() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const reader = new FileReader();
         reader.onload = () => {
           if (reader.result instanceof ArrayBuffer) {

@@ -15,6 +15,7 @@ from gtts import gTTS
 from ..core.config import settings
 import ssl
 import urllib
+import os
 
 # Disable SSL certificate verification (only for bad Mac SSL cases)
 ssl_context = ssl._create_unverified_context()
@@ -69,6 +70,8 @@ async def gpt_audio_responce(gpt_respnce):
         #response_format="pcm",
     ) as response:
         #await LocalAudioPlayer().play(response)
+        if os.path.exists('gpt_output.mp3'):
+            os.remove('gpt_output.mp3')
         await response.stream_to_file('gpt_output.mp3')
         # Load and play an MP3 file
         audio = AudioSegment.from_file("gpt_output.mp3", format="mp3")
