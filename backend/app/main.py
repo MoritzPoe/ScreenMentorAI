@@ -44,4 +44,4 @@ async def audio_data(sid, data):
     await sio.emit('ai_response', response, room=sid)
 
 # Mount the Socket.IO application
-app.mount("/", socket_app) 
+app.mount("/", socket_app)
