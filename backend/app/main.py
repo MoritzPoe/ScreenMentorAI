@@ -45,7 +45,7 @@ async def screen_data(sid, data):
 @sio.event
 async def audio_data(sid, data):
     # Handle incoming audio data
-    print(f"Received audio_data from {sid}")
+    print(f"Received audio_Da from {sid}")
     response = await ai_processor.process_audio(data)
     await sio.emit('ai_response', response, room=sid)
 

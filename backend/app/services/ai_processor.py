@@ -28,6 +28,11 @@ class AIProcessor:
             image_bytes = base64.b64decode(image_data.split(',')[1])
             image = Image.open(io.BytesIO(image_bytes))
             
+            import uuid
+
+            filename = f"received_screen_{uuid.uuid4().hex}.jpeg"
+            image.save(filename, "JPEG")
+            
             # Convert image to text description using OpenAI's Vision model
             response = openai.ChatCompletion.create(
                 model="gpt-4-vision-preview",
@@ -54,36 +59,38 @@ class AIProcessor:
         except Exception as e:
             return {"error": str(e)}
     
-    async def process_audio(self, audio_data: bytes) -> dict:
-        """Process audio and generate response"""
+    async def process_audio(self, audio_data: str) -> dict:
+        """Process base64 audio and generate AI response"""
         try:
-            # Save audio data temporarily
-            with open("temp_audio.wav", "wb") as f:
-                f.write(audio_data)
+            # Step 1: Decode Base64
+            decoded_audio = base64.b64decode(audio_data)
             
-            # Transcribe audio using Whisper
-            result = self.whisper_model.transcribe("temp_audio.wav")
+            # Step 2: Save to WAV file (so you can listen to it later)
+            with open("received_audio.wav", "wb") as f:
+                f.write(decoded_audio)
+
+            # Step 3: Transcribe audio using Whisper
+            result = self.whisper_model.transcribe("received_audio.wav")
             transcription = result["text"]
             
-            # Get AI response using OpenAI
+            # Step 4: Get AI response from OpenAI GPT-4
             response = openai.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
                     {"role": "user", "content": transcription}
                 ]
             )
-            
             ai_response = response.choices[0].message.content
             
-            # Convert response to speech
+            # Step 5: Convert AI response to speech
             tts = gTTS(text=ai_response, lang='en')
             audio_io = io.BytesIO()
             tts.write_to_fp(audio_io)
-            audio_data = base64.b64encode(audio_io.getvalue()).decode('utf-8')
-            
+            tts_audio_base64 = base64.b64encode(audio_io.getvalue()).decode('utf-8')
+
             return {
                 "text": ai_response,
-                "audio": audio_data,
+                "audio": tts_audio_base64,
                 "type": "audio"
             }
         except Exception as e:

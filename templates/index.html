@@ -73,19 +73,24 @@
                 isScreenSharing = true;
                 document.getElementById('screenShareBtn').classList.add('bg-red-500', 'text-white');
 
-                screenInterval = setInterval(() => {
-                    const video = document.createElement('video');
-                    video.srcObject = stream;
-                    video.onloadedmetadata = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(video, 0, 0);
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.muted = true; // Mute it to avoid noise
+                video.play(); // Important: start playing
+
+                video.onloadedmetadata = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+
+                    screenInterval = setInterval(() => {
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                         const imageData = canvas.toDataURL('image/jpeg');
                         socket.emit('screen_data', imageData);
-                    };
-                }, 5000);
+                        console.log('Sent screen data');
+                    }, 5000);
+                };
 
                 stream.getVideoTracks()[0].onended = stopScreenCapture;
             } catch (err) {
