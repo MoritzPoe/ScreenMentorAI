@@ -3,7 +3,7 @@
 An AI-powered application that captures your screen and audio input, processes them through OpenAI's GPT models, and provides real-time intelligent audio responses.  
 ScreenMentor features a ChatGPT-like user interface with seamless screen sharing and voice interaction.
 
-## Example Screenshot
+## Example
 
 ![Example](images/example.jpeg)
 ---
