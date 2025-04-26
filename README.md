@@ -5,6 +5,10 @@ ScreenMentor features a ChatGPT-like user interface with seamless screen sharing
 
 ---
 
+## Why we care? 
+
+We ourselves constantly felt the friction: every time we had a question, we had to stop, copy-paste, describe what we were seeing, and then piece together an answer. It interrupted our flow.
+
 ## 🚀 Features
 
 - Real-time screen capture

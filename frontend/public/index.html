@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScreenMentor - AI Screen and Audio Assistant</title>
+  <title>SmartMentor - AI Screen and Audio Assistant</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .message-container {
-      height: calc(100vh - 200px);
+      height: calc(100vh - 240px);
     }
     @keyframes pulse {
       0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.5); }
-      50% { transform: scale(1.05); box-shadow: 0 0 8px 6px rgba(255, 0, 0, 0.5); }
+      50% { transform: scale(1.05); box-shadow: 0 0 10px 8px rgba(255, 0, 0, 0.5); }
       100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
     }
     .recording {
@@ -24,6 +24,11 @@
 
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
+  <!-- Banner -->
+  <div class="w-full bg-gray-200 py-4 shadow-sm">
+    <h1 class="text-center text-gray-800 text-2xl font-bold">ScreenMentor</h1>
+  </div>
+
   <div class="container mx-auto px-4 py-8 flex flex-col flex-grow">
     <div class="bg-white rounded-2xl shadow-2xl p-6 flex flex-col flex-grow">
       
@@ -32,7 +37,7 @@
 
       <!-- Chat Input Container -->
       <div class="border-t pt-4">
-        <div class="bg-gray-100 p-4 rounded-xl flex items-center justify-between gap-4">
+        <div class="bg-white p-4 rounded-xl flex items-center justify-between gap-4 shadow-md">
           <span class="text-gray-500 font-medium">Ask AI</span>
           <div class="flex items-center gap-2">
             <button id="startBtn" class="px-3 py-2 bg-gray-300 hover:bg-gray-400 rounded-md text-sm shadow-md transition-all duration-200">
@@ -40,8 +45,10 @@
                 <path d="M12 14a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 0014 0h-2zm-5 8a7 7 0 007-7h2a9 9 0 01-18 0h2a7 7 0 007 7zm-1 0h2v2h-2v-2z"/>
               </svg>
             </button>
-            <button id="stopBtn" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm shadow-md transition-all duration-200 hidden">
-              Stop
+            <button id="stopBtn" class="px-3 py-2 bg-red-300 hover:bg-red-400 rounded-md text-sm shadow-md transition-all duration-200 hidden">
+              <svg class="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 6h12v12H6z"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -50,6 +57,7 @@
     </div>
   </div>
 
+  <!-- Spinner -->
   <div id="spinner" class="fixed top-4 left-4 hidden">
     <div class="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
   </div>
@@ -70,7 +78,10 @@
 
     if (isAI) {
       const icon = document.createElement('div');
-      icon.innerHTML = `<svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a9 9 0 00-9 9v4a9 9 0 0018 0v-4a9 9 0 00-9-9zm0 16a7 7 0 01-7-7v-4a7 7 0 0114 0v4a7 7 0 01-7 7z"/></svg>`;
+      icon.innerHTML = `
+      <svg class="w-8 h-8 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2a1 1 0 011 1v1h4a2 2 0 012 2v2h1a1 1 0 011 1v4a10 10 0 11-20 0v-4a1 1 0 011-1h1V6a2 2 0 012-2h4V3a1 1 0 011-1zM7 10a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z"/>
+      </svg>`;
       messageDiv.appendChild(icon);
     }
 
