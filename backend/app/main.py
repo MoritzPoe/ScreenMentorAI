@@ -4,6 +4,7 @@ from fastapi.websockets import WebSocket
 from .core.config import settings
 from .api.routes import router
 import socketio
+from .services.ai_processor import ai_processor
 
 app = FastAPI(title="AI Screen and Audio Assistant")
 
@@ -20,8 +21,11 @@ app.add_middleware(
 app.include_router(router, prefix="/api")
 
 # Socket.IO setup
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=[settings.FRONTEND_URL])
-socket_app = socketio.ASGIApp(sio, app)
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins=[settings.FRONTEND_URL]
+)
+
 
 @sio.event
 async def connect(sid, environ):
@@ -33,15 +37,16 @@ async def disconnect(sid):
 
 @sio.event
 async def screen_data(sid, data):
-    # Handle incoming screen data
-    response = await process_screen_data(data)
+    # Handle incoming screen data    
+    response = await ai_processor.process_screen(data)
     await sio.emit('ai_response', response, room=sid)
 
 @sio.event
 async def audio_data(sid, data):
     # Handle incoming audio data
-    response = await process_audio_data(data)
+    response = await ai_processor.process_audio(data)
     await sio.emit('ai_response', response, room=sid)
 
 # Mount the Socket.IO application
-app.mount("/", socket_app)
+app = socketio.ASGIApp(socketio_server=sio, other_asgi_app=app)
+

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Screen and Audio Assistant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .message-container {
+            height: calc(100vh - 100px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="root"></div> <!-- Add this line -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="message-container overflow-y-auto p-4 space-y-4">
+                <div id="messages"></div>
+            </div>
+            <div class="border-t p-4">
+                <div class="flex items-center space-x-4">
+                    <button id="screenShareBtn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                    <button id="audioRecordBtn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io("http://localhost:8000");
+        let mediaRecorder;
+        let isRecording = false;
+        let isScreenSharing = false;
+        let screenInterval;
+
+        function addMessage(content, isAI = false, audioUrl = null) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${isAI ? 'justify-start' : 'justify-end'} mb-4`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `rounded-lg p-4 max-w-[70%] ${isAI ? 'bg-white text-gray-800' : 'bg-blue-500 text-white'}`;
+            bubble.textContent = content;
+
+            if (audioUrl) {
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.className = 'mt-2';
+                const source = document.createElement('source');
+                source.src = audioUrl;
+                source.type = 'audio/mp3';
+                audio.appendChild(source);
+                bubble.appendChild(audio);
+            }
+
+            messageDiv.appendChild(bubble);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function startScreenCapture() {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                isScreenSharing = true;
+                document.getElementById('screenShareBtn').classList.add('bg-red-500', 'text-white');
+
+                screenInterval = setInterval(() => {
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0);
+                        const imageData = canvas.toDataURL('image/jpeg');
+                        socket.emit('screen_data', imageData);
+                    };
+                }, 5000);
+
+                stream.getVideoTracks()[0].onended = stopScreenCapture;
+            } catch (err) {
+                console.error('Error capturing screen:', err);
+                stopScreenCapture();
+            }
+        }
+
+        function stopScreenCapture() {
+            isScreenSharing = false;
+            document.getElementById('screenShareBtn').classList.remove('bg-red-500', 'text-white');
+            clearInterval(screenInterval);
+        }
+
+        async function startAudioRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                const audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        socket.emit('audio_data', reader.result.split(',')[1]);
+                    };
+                    reader.readAsDataURL(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                document.getElementById('audioRecordBtn').classList.add('bg-red-500', 'text-white');
+            } catch (err) {
+                console.error('Error recording audio:', err);
+                stopAudioRecording();
+            }
+        }
+
+        function stopAudioRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('audioRecordBtn').classList.remove('bg-red-500', 'text-white');
+            }
+        }
+
+        document.getElementById('screenShareBtn').onclick = () => {
+            if (!isScreenSharing) {
+                startScreenCapture();
+            }
+        };
+
+        document.getElementById('audioRecordBtn').onclick = () => {
+            if (isRecording) {
+                stopAudioRecording();
+            } else {
+                startAudioRecording();
+            }
+        };
+
+        socket.on('ai_response', (response) => {
+            const audioUrl = response.audio ? `data:audio/mp3;base64,${response.audio}` : null;
+            addMessage(response.text, true, audioUrl);
+        });
+
+        socket.on('error', (error) => {
+            console.error('Server error:', error);
+            addMessage('Error: ' + error.message, true);
+        });
+    </script>
+</body>
+</html>

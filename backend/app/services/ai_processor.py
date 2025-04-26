@@ -5,6 +5,15 @@ import whisper
 import openai
 from gtts import gTTS
 from ..core.config import settings
+import ssl
+import urllib
+
+# Disable SSL certificate verification (only for bad Mac SSL cases)
+ssl_context = ssl._create_unverified_context()
+opener = urllib.request.build_opener(
+    urllib.request.HTTPSHandler(context=ssl_context)
+)
+urllib.request.install_opener(opener)
 
 openai.api_key = settings.OPENAI_API_KEY
 
