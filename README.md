@@ -1,18 +1,23 @@
-# AI Screen and Audio Assistant
+# ScreenMentor - AI Screen and Audio Assistant
 
-An AI-powered application that captures screen and audio input, processes them through OpenAI's GPT model, and provides audio responses. The application features a ChatGPT-like interface with screen sharing and audio recording capabilities.
+An AI-powered application that captures your screen and audio input, processes them through OpenAI's GPT models, and provides real-time intelligent audio responses.  
+ScreenMentor features a ChatGPT-like user interface with seamless screen sharing and voice interaction.
 
-## Features
+---
+
+## 🚀 Features
 
 - Real-time screen capture
-- Audio recording and transcription
-- Integration with OpenAI's GPT for intelligent responses
-- Text-to-speech conversion for AI responses
-- Modern, ChatGPT-like user interface
+- Real-time audio recording and transcription
+- Integration with OpenAI's GPT-4.1-mini and GPT-4o-mini models
+- Text-to-speech (TTS) generation for AI responses
+- ChatGPT-like frontend design
 - WebSocket-based real-time communication
+- Multi-modal AI assistant combining screen + voice understanding
+
+---
 
 ## Project Structure
-
 ```
 .
 ├── backend/
@@ -28,60 +33,59 @@ An AI-powered application that captures screen and audio input, processes them t
 │   │   ├── services/
 │   │   └── styles/
 │   └── package.json
-├── .env.example
 └── requirements.txt
 ```
 
-## Setup Instructions
+## 🛠️ Setup Instructions
 
-1. Clone the repository
-2. Create and activate a virtual environment:
+1. **Clone the repository:**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   git clone https://github.com/your-username/your-repo-name.git
+   cd your-repo-name
    ```
-3. Install Python dependencies:
+   
+
+2. **Create and activate a virtual environment:**
+(We tested using Python 3.12 and recommend using it.)
+   ```bash 
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install Python dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
-4. Install frontend dependencies:
+
+4. **Start the backend server:**
+   ```bash
+   cd backend
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+5. **Install frontend dependencies:**
    ```bash
    cd frontend
    npm install
    ```
-5. Copy `.env.example` to `.env` and fill in your credentials:
+
+6. **Start the frontend development server:**
    ```bash
-   cp .env.example .env
-   ```
-6. Start the backend server:
-   ```bash
-   cd backend
-   uvicorn app.main:app --reload
-   ```
-7. Start the frontend development server:
-   ```bash
-   cd frontend
    npm run dev
    ```
 
-## Environment Variables
-
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `SECRET_KEY`: Secret key for JWT token generation
-- `FRONTEND_URL`: URL of the frontend application
+The Server now runs on http://localhost:3000. Share your screen and allow the browser to use your microphone to try out the ScreenMentor! 
 
 ## Technologies Used
 
 - **Backend**:
   - FastAPI
-  - WebSocket
-  - OpenAI API
-  - Whisper (for speech-to-text)
-  - gTTS (for text-to-speech)
+  - WebSocket (Socket.IO)
+  - OpenAI API (GPT-4.1-mini, GPT-4o-mini-tts, gpt-4o-mini-transcribe)
 
 - **Frontend**:
   - React
-  - TypeScript
+  - JavaScript
   - Tailwind CSS
   - Socket.io-client
 
