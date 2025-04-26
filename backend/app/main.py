@@ -38,12 +38,14 @@ async def disconnect(sid):
 @sio.event
 async def screen_data(sid, data):
     # Handle incoming screen data    
+    print(f"Received screen_data from {sid}")
     response = await ai_processor.process_screen(data)
     await sio.emit('ai_response', response, room=sid)
 
 @sio.event
 async def audio_data(sid, data):
     # Handle incoming audio data
+    print(f"Received audio_data from {sid}")
     response = await ai_processor.process_audio(data)
     await sio.emit('ai_response', response, room=sid)
 
