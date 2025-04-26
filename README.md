@@ -5,7 +5,7 @@ ScreenMentor features a ChatGPT-like user interface with seamless screen sharing
 
 ## Example Screenshot
 
-![Example Output](images/example.jpeg)
+![Example](images/example.jpeg)
 ---
 
 ## Why we care? 
