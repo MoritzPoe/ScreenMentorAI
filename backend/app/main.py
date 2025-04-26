@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .api.routes import router
 import socketio
-from .services.ai_processor import mp3_and_jpg_to_mp3
+from .services.ai_processor import mp3_and_jpg_to_mp3, transcribe_audio
 import base64
 
 from pydub import AudioSegment
@@ -66,15 +66,23 @@ async def process_data(sid, data):
         with open(image_path, "wb") as f:
             f.write(image_bytes)
 
-        # Step 5: Call your unified AI pipeline with MP3 path
+        # Step 5: Transcribe audio and emit user input to frontend
+        user_transcription = transcribe_audio(audio_mp3_path)
+        await sio.emit('user_transcript', {
+            "text": user_transcription,
+            "type": "user"
+        }, room=sid)
+
+        # Step 6: Generate AI response
         model_text_response = await mp3_and_jpg_to_mp3(audio_mp3_path, image_path)
 
-        # Step 6: Send AI text response back to frontend
+        # Step 7: Send AI response back to frontend
         await sio.emit('ai_response', {
             "text": model_text_response,
             "type": "combined"
         }, room=sid)
 
+        # Cleanup temporary files
         os.remove(audio_webm_path)
         os.remove(audio_mp3_path)
         os.remove(image_path)
