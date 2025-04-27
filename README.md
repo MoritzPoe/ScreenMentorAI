@@ -47,8 +47,8 @@ We ourselves constantly felt the friction: every time we had a question, we had 
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/your-repo-name.git
-   cd your-repo-name
+   git clone https://github.com/miikhailk2002/vibegpt.git
+   cd vibegpt
    ```
    
 
@@ -78,7 +78,7 @@ We ourselves constantly felt the friction: every time we had a question, we had 
 
 6. **Start the frontend development server:**
    ```bash
-   npm run dev
+   npm start
    ```
 
 The Server now runs on http://localhost:3000. Share your screen and allow the browser to use your microphone to try out the ScreenMentor! 
