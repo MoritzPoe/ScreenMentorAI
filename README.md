@@ -1,3 +1,5 @@
+# TUM.ai Makeathon Open AI Challenge Participation
+
 # ScreenMentor - AI Screen and Audio Assistant
 
 An AI-powered application that captures your screen and audio input, processes them through OpenAI's GPT models, and provides real-time intelligent audio responses.  
