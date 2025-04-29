@@ -1,4 +1,4 @@
-# TUM.ai Makeathon Open AI Challenge Participation
+# TUM.ai Makeathon - Open AI Challenge Participation
 
 # ScreenMentor - AI Screen and Audio Assistant
 
